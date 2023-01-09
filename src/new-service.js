@@ -21,7 +21,11 @@ export default class NewsApiService {
     };
 
     const response = await axios.get(this.url, { params }).then(response => {
+      if (response.status !== 200) {
+        throw new Error(response.status);
+      }
       const allPages = Math.ceil(response.data.totalHits / this.per_page);
+      console.log(this.page);
 
       if (this.page > allPages) {
         Notiflix.Notify.failure(
