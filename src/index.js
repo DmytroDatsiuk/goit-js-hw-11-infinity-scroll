@@ -3,6 +3,7 @@ import Notiflix from 'notiflix';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import throttle from 'lodash.throttle';
+import debounce from 'lodash.debounce';
 
 const refs = {
   searchForm: document.querySelector('.search-form'),
@@ -12,20 +13,28 @@ const refs = {
 const newsApiService = new NewsApiService();
 
 refs.searchForm.addEventListener('submit', onSearch);
-window.addEventListener('scroll', throttle(checkPosition, 250));
-window.addEventListener('resize', throttle(checkPosition, 250));
+window.addEventListener('scroll', debounce(checkPosition, 400));
+window.addEventListener('resize', debounce(checkPosition, 400));
 
 function onSearch(e) {
   e.preventDefault();
   clearGalleryMarkup();
 
-  newsApiService.query = e.currentTarget.elements.searchQuery.value;
+  const search = e.currentTarget.elements.searchQuery.value;
+
+  newsApiService.query = search.trim();
+
+  if (!search.trim()) {
+    Notiflix.Notify.failure(`Please enter your reqest.`);
+    return;
+  }
 
   newsApiService.resetPage();
 
-  newsApiService
-    .fetchArticles()
-    .then(data => {
+  const getData = async () => {
+    try {
+      const data = await newsApiService.fetchArticles();
+
       if (data.totalHits === 0) {
         Notiflix.Notify.failure(
           `Sorry, there are no images matching your search query. Please try again.`
@@ -34,14 +43,19 @@ function onSearch(e) {
       }
 
       Notiflix.Notify.success(`Hooray! We found ${data.totalHits} images.`);
+
       appendPhotoHitsMurkup(data.hits);
-    })
-    .catch(error => {
+
+      newsApiService.incrementPage();
+    } catch (error) {
       console.log(error);
-    });
+    }
+  };
+  getData();
 }
 
 function checkPosition() {
+  
   const height = document.body.offsetHeight;
   const screenHeight = window.innerHeight;
 
@@ -52,14 +66,43 @@ function checkPosition() {
   const position = scrolled + screenHeight;
 
   if (position >= threshold) {
-    newsApiService
-      .fetchArticles()
-      .then(data => {
+    const getData = async () => {
+      try {
+        const data = await newsApiService.fetchArticles();
+
+        const allPages = Math.ceil(data.totalHits / newsApiService.per_page);
+
+        if (newsApiService.page > allPages) {
+          Notiflix.Notify.failure(
+            "We're sorry, but you've reached the end of search results."
+          );
+          return;
+        }
+
+        if (data.totalHits === 0) {
+          Notiflix.Notify.failure(
+            `Sorry, there are no images matching your search query. Please try again.`
+          );
+          return;
+        }
+
+
         appendPhotoHitsMurkup(data.hits);
-      })
-      .catch(error => {
+
+        newsApiService.incrementPage();
+      } catch (error) {
         console.log(error);
-      });
+      }
+    };
+    getData();
+    // newsApiService
+    //   .fetchArticles()
+    //   .then(data => {
+    //     appendPhotoHitsMurkup(data.hits);
+    //   })
+    //   .catch(error => {
+    //     console.log(error);
+    //   });
   }
 }
 
@@ -118,4 +161,14 @@ function createPhotoMarkup(searchQuery) {
 
 function clearGalleryMarkup() {
   refs.gallery.innerHTML = '';
+}
+function checkEndOfPage(data) {
+  const allPages = Math.ceil(data.totalHits / newsApiService.per_page);
+
+  if (newsApiService.page > allPages) {
+    Notiflix.Notify.failure(
+      "We're sorry, but you've reached the end of search results."
+    );
+    return;
+  }
 }

@@ -1,5 +1,4 @@
 import axios, { all } from 'axios';
-import Notiflix from 'notiflix';
 
 export default class NewsApiService {
   constructor() {
@@ -20,26 +19,9 @@ export default class NewsApiService {
       page: this.page,
     };
 
-    const response = await axios.get(this.url, { params }).then(response => {
-      if (response.status !== 200) {
-        throw new Error(response.status);
-      }
-      const allPages = Math.ceil(response.data.totalHits / this.per_page);
-      console.log(this.page);
+    const response = await axios.get(this.url, { params });
 
-      if (this.page > allPages) {
-        Notiflix.Notify.failure(
-          "We're sorry, but you've reached the end of search results."
-        );
-
-        return;
-      }
-      this.incrementPage();
-
-      return response.data;
-    });
-
-    return response;
+    return response.data;
   }
   incrementPage() {
     this.page += 1;
