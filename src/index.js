@@ -48,6 +48,9 @@ function onSearch(e) {
 
       newsApiService.incrementPage();
     } catch (error) {
+      Notiflix.Notify.failure(
+        `We're sorry, but you've reached the end of search results.`
+      );
       console.log(error);
     }
   };
@@ -55,7 +58,6 @@ function onSearch(e) {
 }
 
 function checkPosition() {
-  
   const height = document.body.offsetHeight;
   const screenHeight = window.innerHeight;
 
@@ -86,23 +88,17 @@ function checkPosition() {
           return;
         }
 
-
         appendPhotoHitsMurkup(data.hits);
 
         newsApiService.incrementPage();
       } catch (error) {
+        Notiflix.Notify.failure(
+          `We're sorry, but you've reached the end of search results.`
+        );
         console.log(error);
       }
     };
     getData();
-    // newsApiService
-    //   .fetchArticles()
-    //   .then(data => {
-    //     appendPhotoHitsMurkup(data.hits);
-    //   })
-    //   .catch(error => {
-    //     console.log(error);
-    //   });
   }
 }
 
