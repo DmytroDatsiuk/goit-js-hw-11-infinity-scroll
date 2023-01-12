@@ -2,7 +2,6 @@ import NewsApiService from './new-service';
 import Notiflix from 'notiflix';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
-import throttle from 'lodash.throttle';
 import debounce from 'lodash.debounce';
 
 const refs = {
@@ -157,14 +156,4 @@ function createPhotoMarkup(searchQuery) {
 
 function clearGalleryMarkup() {
   refs.gallery.innerHTML = '';
-}
-function checkEndOfPage(data) {
-  const allPages = Math.ceil(data.totalHits / newsApiService.per_page);
-
-  if (newsApiService.page > allPages) {
-    Notiflix.Notify.failure(
-      "We're sorry, but you've reached the end of search results."
-    );
-    return;
-  }
 }
